@@ -1,31 +1,56 @@
 import { Button } from "@/components/ui/button";
-import React from "react";
+import React, { useEffect } from "react";
 import { useDropzone } from "react-dropzone";
-import { Image as ImageIcon, X } from "lucide-react";
+import { X } from "lucide-react";
 import imageCompression from "browser-image-compression";
+import { applyThresholdToFile } from "@/app/utils/image-processing";
+import Image from "next/image";
+import Hint from "@/app/components/hint/hint";
 
 const renderDroppedFile = (
   index: number,
   file: File,
   handleRemoveFile: (index: number) => void
 ) => {
+  const imageUrl = URL.createObjectURL(file);
+
   return (
     <div
       key={self.crypto.randomUUID()}
-      className="p-2 border-2 border-muted-foreground/10 bg-white rounded-lg flex justify-between items-center w-fit"
+      className="p-2 border-2 border-muted-foreground/10 bg-white rounded-lg flex items-center gap-4 w-fit max-w-xs"
     >
-      {file.type.includes("image") && <ImageIcon />}
-      {file.name.length > 20 ? `${file.name.slice(0, 40)}...` : file.name}
-      <Button
-        variant={"ghost"}
-        className="cursor-pointer"
-        onClick={(e) => {
-          e.preventDefault();
-          handleRemoveFile(index);
-        }}
-      >
-        <X />
-      </Button>
+      {file.type.includes("image") && (
+        <Hint
+          title={file.name}
+          content={
+            <Image alt={file.name} src={imageUrl} height={300} width={300} />
+          }
+        >
+          <Image
+            src={imageUrl}
+            alt={file.name}
+            width={50}
+            height={50}
+            className=" size-14 object-cover rounded-md"
+          />
+        </Hint>
+      )}
+
+      <div className="flex  flex-grow truncate">
+        <span className="text-sm font-medium truncate">
+          {file.name.length > 40 ? `${file.name.slice(0, 40)}...` : file.name}
+        </span>
+        <Button
+          variant={"ghost"}
+          className="self-start mt-1 p-1 h-auto text-red-500"
+          onClick={(e) => {
+            e.preventDefault();
+            handleRemoveFile(index);
+          }}
+        >
+          <X className="w-4 h-4" />
+        </Button>
+      </div>
     </div>
   );
 };
@@ -36,6 +61,7 @@ interface InputDropzoneProps {
   files?: File[];
   accept?: string;
   compressedImages?: boolean;
+  threshold?: number;
 }
 
 const FileDropzone = ({
@@ -44,6 +70,7 @@ const FileDropzone = ({
   files = [],
   accept,
   compressedImages = false,
+  threshold = 0,
 }: InputDropzoneProps) => {
   const { getRootProps, getInputProps } = useDropzone({
     onDrop: (acceptedFiles) => {
@@ -72,9 +99,27 @@ const FileDropzone = ({
         );
       }
 
+      const thresholdedFiles = await Promise.all(
+        (compressedImages ? compressedFiles : acceptedFiles).map(
+          async (file) => {
+            const thresholdedBlob = await applyThresholdToFile(
+              file,
+              threshold || 0
+            );
+            return new File([thresholdedBlob], file.name, {
+              type: "image/png",
+            });
+          }
+        )
+      );
+
       const newFiles = [
         ...files,
-        ...(compressedImages ? compressedFiles : acceptedFiles),
+        ...(threshold > 0
+          ? thresholdedFiles
+          : compressedImages
+          ? compressedFiles
+          : acceptedFiles),
       ];
       onFilesAdded(newFiles);
     } catch (error) {
@@ -86,6 +131,10 @@ const FileDropzone = ({
     const newFiles = files.filter((_, index) => index !== indexToRemove);
     onFilesAdded(newFiles);
   };
+
+  useEffect(() => {
+    console.log("threshold: ", threshold);
+  }, [threshold]);
 
   return (
     <section className="w-full h-full relative space-y-4">

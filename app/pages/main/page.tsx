@@ -13,6 +13,8 @@ import {
 import { Button } from "@/components/ui/button";
 import FileDropzone from "@/app/components/dropzone/dropzone";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@radix-ui/react-label";
 // import { Input } from "@/components/ui/input";
 // import { Badge } from "@/components/ui/badge";
 // import { X } from "lucide-react";
@@ -150,11 +152,8 @@ const OcrPage = () => {
   const [progress, setProgress] = useState<number>(0);
   const [worker, setWorker] = useState<Worker | null>(null);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
-  // const [fields, setFields] = useState<string[]>([]);
-  // const [tableColumns, setTableColumns] = useState<string[]>([]);
-  // const [inputValue, setInputValue] = useState<string>("");
-  // const [inputTableColumns, setInputTableColumns] = useState<string>("");
   const [compressedFiles, setCompressedFiles] = useState<boolean>(false);
+  const [threshold, setThreshold] = useState<number | undefined>(128);
 
   useEffect(() => {
     const initWorker = async () => {
@@ -255,42 +254,43 @@ const OcrPage = () => {
             Upload image files to extract text using OCR technology.
           </CardDescription>
         </div>
-        {/* {isMobile && ( */}
-        {/* <Button onClick={() => router.push("/camera")}>{`Open Camera`}</Button> */}
-        {/* <Button onClick={() => router.push(`pages/tos`)}>{"open route"}</Button> */}
-        {/* )} */}
       </CardHeader>
-      {/* {renderFilters(
-        fields,
-        setFields,
-        inputValue,
-        setInputValue,
-        tableColumns,
-        setTableColumns,
-        inputTableColumns,
-        setInputTableColumns
-      )} */}
-
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              onCheckedChange={(e) => setCompressedFiles(e as boolean)}
-              className="cursor-pointer border-black size-5"
-            />
-            <label
-              htmlFor="terms"
-              className="text-md font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-            >
-              {"Compress Images Before Process"}
-            </label>
-          </div>{" "}
+          <div className="flex items-center space-x-2  justify-between">
+            <div className="flex items-center gap-4">
+              <Checkbox
+                onCheckedChange={(e) => setCompressedFiles(e as boolean)}
+                className="cursor-pointer border-black size-5"
+              />
+              <label
+                htmlFor="terms"
+                className="text-md font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                {"Compress Images Before Process"}
+              </label>
+            </div>
+            <div>
+              <Label htmlFor="threshold">Input Threshold</Label>
+              <Input
+                id="threshold"
+                type="number"
+                placeholder="Enter threshold (128 recomended)"
+                value={threshold || ""}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setThreshold(Number(value));
+                }}
+              />
+            </div>
+          </div>
           <FileDropzone
             compressedImages={compressedFiles}
             placeholder="Drag and drop images here, or click to select files"
             onFilesAdded={setFiles}
             files={files}
             accept=".jpg,.jpeg,.png,.pdf,.docx"
+            threshold={threshold}
           />
         </CardContent>
         <CardFooter className="flex justify-between mt-4">
@@ -327,12 +327,7 @@ const OcrPage = () => {
             <CardTitle className="text-lg">OCR Results</CardTitle>
           </CardHeader>
           {processedFiles.map((file) => (
-            <motion.div
-              key={self.crypto.randomUUID()}
-              // initial={{ opacity: 0, y: -20 }}
-              // whileInView={{ opacity: 1, y: 0 }}
-              // transition={{ duration: 0.5, once: true }}
-            >
+            <motion.div key={self.crypto.randomUUID()}>
               <CardContent>
                 <div className="mb-4 p-3 border rounded-md bg-white shadow-sm">
                   <div className="flex justify-between items-center mb-2">
@@ -347,24 +342,6 @@ const OcrPage = () => {
                     <pre className="text-xs whitespace-pre-wrap max-h-40 overflow-y-auto">
                       {ocrResults[getFileKey(file)] || "Processing..."}
                     </pre>
-                    {/* <pre>
-                      {JSON.stringify(
-                        extractFields(ocrResults[getFileKey(file)], fields),
-                        null,
-                        2
-                      )}
-                    </pre>
-
-                    <pre>
-                      {JSON.stringify(
-                        extractTable(
-                          ocrResults[getFileKey(file)],
-                          tableColumns
-                        ),
-                        null,
-                        2
-                      )}
-                    </pre> */}
                   </div>
                 </div>
               </CardContent>
