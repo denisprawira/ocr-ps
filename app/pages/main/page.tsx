@@ -1,3 +1,4 @@
+"use client";
 import { useEffect, useState, useCallback } from "react";
 import { createWorker, Worker } from "tesseract.js";
 import { motion } from "motion/react";
@@ -11,7 +12,6 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import FileDropzone from "@/app/components/dropzone/dropzone";
-import { useRouter } from "next/navigation";
 import { Checkbox } from "@/components/ui/checkbox";
 // import { Input } from "@/components/ui/input";
 // import { Badge } from "@/components/ui/badge";
@@ -20,9 +20,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 interface OcrResults {
   [key: string]: string;
 }
-
-type FieldResult = { [key: string]: string };
-type TableRow = { [key: string]: string };
 
 // const renderFilters = (
 //   keywords: string[],
@@ -146,51 +143,7 @@ type TableRow = { [key: string]: string };
 //   );
 // };
 
-export function extractFields(text: string, fields: string[]): FieldResult {
-  const result: FieldResult = {};
-
-  fields.forEach((field) => {
-    const pattern = new RegExp(`${field}\\s*:?\\s*([^\n]+)`, "i");
-    const match = text.match(pattern);
-    result[field] = match ? match[1].trim() : "";
-  });
-
-  return result;
-}
-
-export function extractTable(text: string, columns: string[]): TableRow[] {
-  const lines = text
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean);
-
-  const headerIndex = lines.findIndex((line) =>
-    columns.every((col) => line.toLowerCase().includes(col.toLowerCase()))
-  );
-
-  if (headerIndex === -1) return [];
-
-  const dataLines = lines.slice(headerIndex + 1);
-
-  const rows: TableRow[] = [];
-
-  for (const line of dataLines) {
-    const parts = line.split(/\s+/);
-    if (parts.length < columns.length) continue;
-
-    const row: TableRow = {};
-    for (let i = 0; i < columns.length; i++) {
-      row[columns[i]] = parts[i] ?? "";
-    }
-
-    rows.push(row);
-  }
-
-  return rows;
-}
-
 const OcrPage = () => {
-  const router = useRouter();
   const [files, setFiles] = useState<File[]>([]);
   const [processedFiles, setProcessedFiles] = useState<File[]>([]);
   const [ocrResults, setOcrResults] = useState<OcrResults>({});
@@ -201,20 +154,7 @@ const OcrPage = () => {
   // const [tableColumns, setTableColumns] = useState<string[]>([]);
   // const [inputValue, setInputValue] = useState<string>("");
   // const [inputTableColumns, setInputTableColumns] = useState<string>("");
-  const [isMobile, setIsMobile] = useState(false);
   const [compressedFiles, setCompressedFiles] = useState<boolean>(false);
-
-  useEffect(() => {
-    const userAgent = navigator.userAgent || navigator.vendor;
-
-    if (
-      /android|iphone|ipad|iPod|opera mini|iemobile|mobile/i.test(userAgent)
-    ) {
-      setIsMobile(true);
-    } else {
-      setIsMobile(false);
-    }
-  }, []);
 
   useEffect(() => {
     const initWorker = async () => {

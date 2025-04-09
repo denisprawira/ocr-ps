@@ -1,5 +1,4 @@
 "use client";
-import CameraCapture from "@/app/components/camera-capture/camera-capture";
 import OcrPage from "@/app/pages/main/page";
 import { useEffect } from "react";
 
