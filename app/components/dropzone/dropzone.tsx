@@ -12,7 +12,7 @@ const renderDroppedFile = (
   return (
     <div
       key={self.crypto.randomUUID()}
-      className="p-2 border-2 border-muted-foreground/10 bg-white rounded-lg flex justify-between items-center"
+      className="p-2 border-2 border-muted-foreground/10 bg-white rounded-lg flex justify-between items-center w-fit"
     >
       {file.type.includes("image") && <ImageIcon />}
       {file.name.length > 20 ? `${file.name.slice(0, 40)}...` : file.name}
@@ -100,7 +100,7 @@ const FileDropzone = ({
           <p className="text-wrap text-muted-foreground">{placeholder}</p>
         )}
       </div>
-      <div className=" grid gap-2 max-w-full grid-cols-2 ">
+      <div className=" grid gap-2 max-w-full grid-cols-2 max-sm:grid-cols-1">
         {files.map((file: File, index) =>
           renderDroppedFile(index, file, handleRemoveFile)
         )}
